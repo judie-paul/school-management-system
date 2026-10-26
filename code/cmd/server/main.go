@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
@@ -33,7 +34,16 @@ func main() {
 	secure := flag.Bool("secure-cookies", os.Getenv("SCHOOL_SECURE_COOKIES") == "1",
 		"mark cookies Secure (enable when serving over HTTPS)")
 	resetUser := flag.String("reset-password", "", "set a new random password for this staff username, print it and exit")
+	testMode := flag.Bool("test", false, "use a separate test database (school-test.db) filled with sample data")
 	flag.Parse()
+
+	if *testMode {
+		dbSet := false
+		flag.Visit(func(f *flag.Flag) { dbSet = dbSet || f.Name == "db" })
+		if !dbSet {
+			*dbPath = "school-test.db"
+		}
+	}
 
 	conn, err := db.Open(*dbPath)
 	if err != nil {
@@ -52,7 +62,11 @@ func main() {
 		}
 		return
 	}
-	if err := ensureAdmin(st); err != nil {
+	if *testMode {
+		if err := loadTestData(conn, *dbPath); err != nil {
+			log.Fatal(err)
+		}
+	} else if err := ensureAdmin(st); err != nil {
 		log.Fatal(err)
 	}
 
@@ -104,6 +118,33 @@ func ensureAdmin(st *store.Store) error {
 	} else {
 		fmt.Println("Initial administrator account 'admin' created with the password from SCHOOL_ADMIN_PASSWORD.")
 	}
+	return nil
+}
+
+// loadTestData fills an empty database with the sample data in test.sql and
+// prints the logins to try.
+func loadTestData(conn *sql.DB, dbPath string) error {
+	script, err := fs.ReadFile(school.Assets, "test.sql")
+	if err != nil {
+		return err
+	}
+	loaded, err := db.SeedIfEmpty(conn, string(script))
+	if err != nil {
+		return err
+	}
+	if loaded {
+		fmt.Printf("\n  TEST MODE: loaded sample data into %s\n", dbPath)
+	} else {
+		fmt.Printf("\n  TEST MODE: %s already has data; sample data not reloaded.\n"+
+			"  Delete %s (and its -wal/-shm files) to start fresh.\n", dbPath, dbPath)
+	}
+	fmt.Print(`
+  Staff login  (/login):         admin / admin-test
+                                 teacher / teacher-test
+                                 finance / finance-test
+  Parent login (/parent/login):  ADM-001 / TEST-0001  (up to ADM-007 / TEST-0007)
+
+`)
 	return nil
 }
 

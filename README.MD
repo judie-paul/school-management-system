@@ -47,6 +47,34 @@ go build -o ..\build\school.exe .\cmd\server
 
 Then open http://127.0.0.1:8080 in a browser.
 
+### Try it out with test data
+
+To explore the app without setting anything up, start it in test mode:
+
+```powershell
+.\build\school.exe --test
+```
+
+This uses a separate database, `school-test.db`, so your real `school.db` is never touched. On the first start the app fills it with the sample data from `code/test.sql`: two classes, five subjects, four terms across 2025–2026, seven students, exams with results, and fee records. It then prints these logins:
+
+| Login page | Username / admission no. | Password / access code | Role |
+|---|---|---|---|
+| http://127.0.0.1:8080/login | `admin` | `admin-test` | Administrator |
+| http://127.0.0.1:8080/login | `teacher` | `teacher-test` | Teacher |
+| http://127.0.0.1:8080/login | `finance` | `finance-test` | Finance |
+| http://127.0.0.1:8080/parent/login | `ADM-001` … `ADM-007` | `TEST-0001` … `TEST-0007` | Parent |
+
+Things to look at:
+- In the current term (2026 Term 3), ADM-001 has fully paid, ADM-002 and ADM-004 have partly paid, ADM-003 and ADM-006 haven't paid, and ADM-005 has overpaid, so a credit is shown.
+- ADM-002 also overpaid in 2026 Term 1. That credit does not change any other term's balance.
+- The Grade 7 "Midterm" in 2026 Term 2 is a **draft**. Staff can see it, but parents can't until an admin publishes it.
+- ADM-007 is an inactive student whose 2025 records are kept.
+- Log in as `teacher` and try to open a fee page. You'll get "Not allowed".
+
+The changes you make in test mode are kept between runs. To start over with fresh sample data, stop the app and delete `school-test.db`, plus `school-test.db-wal` and `school-test.db-shm` if they exist. The sample data is only loaded into an empty database, never into one that already has accounts.
+
+**Never use the test logins for real data.** Their passwords are published in this README.
+
 **First run:** if the database has no staff accounts, the app creates an administrator named `admin` and prints its password in the console once. Save it. To choose the password yourself, set it before the first run:
 
 ```powershell
@@ -69,6 +97,7 @@ Parents log in at http://127.0.0.1:8080/parent/login.
 | `-addr` | `SCHOOL_ADDR` | `127.0.0.1:8080` | Listen address. Use `0.0.0.0:8080` to allow other machines. |
 | `-db` | `SCHOOL_DB` | `school.db` | SQLite database file, relative to the current folder |
 | `-secure-cookies` | `SCHOOL_SECURE_COOKIES=1` | off | Turn this on when the site is served over HTTPS |
+| `--test` | | off | Uses `school-test.db` (unless `-db` is given) and loads the sample data if it's empty |
 | `-reset-password <user>` | | | Sets a new random password for a staff account, prints it and exits. Use this if the admin password is lost. |
 
 **Back up your data** by copying the database file while the server is stopped. The app uses SQLite WAL mode, so also copy the `school.db-wal` and `school.db-shm` files if they exist.

@@ -2,6 +2,7 @@
 package testutil
 
 import (
+	"database/sql"
 	"io/fs"
 	"path/filepath"
 	"testing"
@@ -18,6 +19,13 @@ import (
 // temporary directory that is removed when the test ends.
 func NewStore(t *testing.T) *store.Store {
 	t.Helper()
+	st, _ := NewStoreDB(t)
+	return st
+}
+
+// NewStoreDB is NewStore but also returns the underlying connection.
+func NewStoreDB(t *testing.T) (*store.Store, *sql.DB) {
+	t.Helper()
 	auth.Cost = bcrypt.MinCost
 	conn, err := db.Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
@@ -28,7 +36,7 @@ func NewStore(t *testing.T) *store.Store {
 	if err := db.Migrate(conn, migrations); err != nil {
 		t.Fatal(err)
 	}
-	return store.New(conn)
+	return store.New(conn), conn
 }
 
 // Fixture holds IDs of commonly needed records.

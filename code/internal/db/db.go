@@ -31,6 +31,28 @@ func Open(path string) (*sql.DB, error) {
 	return conn, nil
 }
 
+// SeedIfEmpty runs script in one transaction, but only when the database has
+// no staff accounts, so test data is never mixed into a database in use.
+// It reports whether the script ran.
+func SeedIfEmpty(conn *sql.DB, script string) (bool, error) {
+	var n int
+	if err := conn.QueryRow(`SELECT COUNT(*) FROM staff`).Scan(&n); err != nil {
+		return false, err
+	}
+	if n > 0 {
+		return false, nil
+	}
+	tx, err := conn.Begin()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(script); err != nil {
+		return false, fmt.Errorf("load test data: %w", err)
+	}
+	return true, tx.Commit()
+}
+
 // Migrate applies every *.sql file in fsys, in name order, that has not been
 // applied yet. Each file runs in its own transaction.
 func Migrate(conn *sql.DB, fsys fs.FS) error {

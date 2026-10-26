@@ -16,6 +16,7 @@ School management web app: a Go monolith with server-rendered `html/template` pa
 
 - Build: `go build -o ..\build\school.exe .\cmd\server`, or `build.ps1 [-Test]` from the root.
 - Run: `..\build\school.exe` (flags: `-addr`, `-db`, `-secure-cookies`, `-reset-password <user>`).
+- Run with sample data: `..\build\school.exe --test`. This uses `school-test.db` and seeds it from `code/test.sql` via `db.SeedIfEmpty`, but only when the staff table is empty.
 - Run all tests: `go test ./...`
 - Run a single test: `go test ./internal/web -run TestName -v`
 - Vet: `go vet ./...`
@@ -23,6 +24,7 @@ School management web app: a Go monolith with server-rendered `html/template` pa
 ## Architecture
 
 - `assets.go` (package `school`) uses `go:embed` to embed `templates/`, `static/` and `migrations/`, so the exe is self-contained. If you add an asset directory, add it there too.
+- `test.sql` holds the sample data. It uses explicit IDs and precomputed bcrypt hashes, and access codes are hashed in normalized form (`TEST0001`). If the schema changes, update this file too; `TestSampleData` checks that it still loads and that the documented logins and fee statuses still hold.
 - `internal/db` opens SQLite and applies migrations.
   - Pragmas are set per connection in the DSN: foreign keys, `busy_timeout`, WAL, and `_txlock=immediate`.
   - `Migrate` runs `migrations/*.sql` in name order and records each in `schema_migrations`. Change the schema only by adding a new numbered file; never edit `001_init.sql`.

@@ -3,6 +3,7 @@ package web_test
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	"testing"
 
 	"school"
+	"school/internal/db"
 	"school/internal/store"
 	"school/internal/testutil"
 	"school/internal/web"
@@ -290,6 +292,67 @@ func TestCSRFRequired(t *testing.T) {
 		if cl.Name == "Hacked" {
 			t.Fatal("class created despite bad CSRF token")
 		}
+	}
+}
+
+// TestSampleData checks that test.sql loads and that the logins and
+// scenarios documented in it (and printed by --test) actually work.
+func TestSampleData(t *testing.T) {
+	st, conn := testutil.NewStoreDB(t)
+	script, err := fs.ReadFile(school.Assets, "test.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded, err := db.SeedIfEmpty(conn, string(script)); err != nil || !loaded {
+		t.Fatalf("load test.sql: loaded=%v err=%v", loaded, err)
+	}
+	// A second load is skipped because the database is no longer empty.
+	if loaded, err := db.SeedIfEmpty(conn, string(script)); err != nil || loaded {
+		t.Fatalf("second load: loaded=%v err=%v", loaded, err)
+	}
+
+	for _, login := range [][2]string{{"admin", "admin-test"}, {"teacher", "teacher-test"}, {"finance", "finance-test"}} {
+		if _, err := st.AuthenticateStaff(login[0], login[1]); err != nil {
+			t.Errorf("staff login %s: %v", login[0], err)
+		}
+	}
+	for i := 1; i <= 7; i++ {
+		if _, err := st.AuthenticateParent(fmt.Sprintf("ADM-%03d", i), fmt.Sprintf("TEST-%04d", i)); err != nil {
+			t.Errorf("parent login ADM-%03d: %v", i, err)
+		}
+	}
+
+	// Current term (id 4) statuses as described in test.sql.
+	want := map[int64]string{1: "Fully paid", 2: "Partially paid", 3: "Unpaid", 4: "Partially paid", 5: "Fully paid", 6: "Unpaid"}
+	for id, status := range want {
+		sum, err := st.FeeSummary(id, 4)
+		if err != nil || sum.Status() != status {
+			t.Errorf("student %d current term: got %q (%v), want %q", id, sum.Status(), err, status)
+		}
+	}
+	if sum, _ := st.FeeSummary(5, 4); sum.Credit() != 50000 {
+		t.Errorf("ADM-005 credit = %d, want 50000", sum.Credit())
+	}
+
+	// Every page renders for every role with the sample data.
+	ts := newServer(t, st)
+	for _, login := range [][2]string{{"admin", "admin-test"}, {"teacher", "teacher-test"}, {"finance", "finance-test"}} {
+		c := newClient(t, ts)
+		c.staffLogin(login[0], login[1])
+		for _, p := range []string{"/dashboard", "/students", "/students/1", "/exams", "/exams/5", "/fees?term_id=4&class_id=1", "/students/2/fees?term_id=2", "/staff", "/setup"} {
+			if status, _ := c.get(p); status != http.StatusOK && status != http.StatusForbidden {
+				t.Errorf("%s GET %s: status %d", login[0], p, status)
+			}
+		}
+	}
+	c := newClient(t, ts)
+	c.parentLogin("ADM-001", "TEST-0001")
+	_, body := c.get("/parent/results")
+	if strings.Contains(body, "2026 - Term 2: Midterm") {
+		t.Error("draft exam visible to parent in sample data")
+	}
+	if status, _ := c.get("/parent/fees?term_id=1"); status != http.StatusOK {
+		t.Errorf("parent fees: status %d", status)
 	}
 }
 
