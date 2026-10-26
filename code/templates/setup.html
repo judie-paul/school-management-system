@@ -1,0 +1,32 @@
+{{define "content"}}
+<h1>School setup</h1>
+<p class="muted">Add the classes, subjects and academic terms used across the system.</p>
+
+<div class="card">
+  <h2>Classes</h2>
+  <p>{{range $i, $c := .Data.Classes}}{{if $i}}, {{end}}{{$c.Name}}{{else}}None yet.{{end}}</p>
+  <form method="post" action="/setup/classes" class="inline">{{template "csrf" .CSRF}}
+    <div class="field"><label for="class_name">New class</label><input type="text" id="class_name" name="name" required maxlength="60" placeholder="e.g. Grade 7"></div>
+    <button>Add class</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Subjects</h2>
+  <p>{{range $i, $s := .Data.Subjects}}{{if $i}}, {{end}}{{$s.Name}}{{else}}None yet.{{end}}</p>
+  <form method="post" action="/setup/subjects" class="inline">{{template "csrf" .CSRF}}
+    <div class="field"><label for="subject_name">New subject</label><input type="text" id="subject_name" name="name" required maxlength="60" placeholder="e.g. Mathematics"></div>
+    <button>Add subject</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Academic years &amp; terms</h2>
+  <p>{{range $i, $t := .Data.Terms}}{{if $i}}, {{end}}{{$t.Label}}{{else}}None yet.{{end}}</p>
+  <form method="post" action="/setup/terms" class="inline">{{template "csrf" .CSRF}}
+    <div class="field"><label for="year">Academic year</label><input type="text" id="year" name="year" required placeholder="e.g. 2026"></div>
+    <div class="field"><label for="term_name">Term / semester</label><input type="text" id="term_name" name="name" required maxlength="40" placeholder="e.g. Term 1"></div>
+    <button>Add term</button>
+  </form>
+</div>
+{{end}}

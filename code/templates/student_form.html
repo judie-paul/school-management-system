@@ -1,0 +1,23 @@
+{{define "content"}}
+<h1>{{.Title}}</h1>
+{{if not .Data.Classes}}<p class="msg err">Add a class on the <a href="/setup">setup page</a> first.</p>{{end}}
+<form method="post" action="{{if .Data.IsNew}}/students{{else}}/students/{{.Data.Student.ID}}{{end}}" class="stack card">
+  {{template "csrf" .CSRF}}
+  <div class="field"><label for="admission_no">Admission number</label>
+    <input type="text" id="admission_no" name="admission_no" value="{{.Data.Student.AdmissionNo}}" required maxlength="30"></div>
+  <div class="field"><label for="full_name">Full name</label>
+    <input type="text" id="full_name" name="full_name" value="{{.Data.Student.FullName}}" required maxlength="100"></div>
+  <div class="field"><label for="class_id">Class</label>
+    <select id="class_id" name="class_id" required><option value="">Choose a class</option>
+      {{range .Data.Classes}}<option value="{{.ID}}" {{if eq .ID $.Data.Student.ClassID}}selected{{end}}>{{.Name}}</option>{{end}}
+    </select></div>
+  {{if .Data.IsNew}}
+  <p class="muted">A parent access code will be generated and shown once after saving.</p>
+  {{else}}
+  <div class="field checkbox"><input type="checkbox" id="active" name="active" value="1" {{if .Data.Student.Active}}checked{{end}}>
+    <label for="active">Active (untick to mark the student inactive; records are kept)</label></div>
+  {{end}}
+  <button>Save</button>
+  {{if not .Data.IsNew}}<a href="/students/{{.Data.Student.ID}}">Cancel</a>{{end}}
+</form>
+{{end}}

@@ -1,0 +1,54 @@
+{{define "content"}}
+{{$s := .Data.Student}}
+<h1>Fees: <a href="/students/{{$s.ID}}">{{$s.FullName}}</a></h1>
+<p class="muted">{{$s.AdmissionNo}} &middot; {{$s.ClassName}}</p>
+
+<h2>All terms</h2>
+{{template "feeSummaryTable" .Data.Summaries}}
+
+{{if not .Data.Terms}}
+<p class="msg err">No terms exist yet. An administrator must add one on the setup page.</p>
+{{else}}
+<h2>Term details</h2>
+<form method="get" action="/students/{{$s.ID}}/fees" class="inline card">
+  <div class="field"><label for="term_id">Year / term</label>
+    <select id="term_id" name="term_id">{{range .Data.Terms}}<option value="{{.ID}}" {{if eq .ID $.Data.TermID}}selected{{end}}>{{.Label}}</option>{{end}}</select></div>
+  <button class="secondary">Show</button>
+</form>
+
+{{with .Data.Selected}}
+<div class="card">
+  <strong>{{.Term.Label}}</strong> {{template "feeStatus" .Status}}
+  <dl class="details">
+    <dt>Required fees</dt><dd>{{if .Assessed}}{{money .Required}}{{else}}Not set{{end}}</dd>
+    <dt>Total paid</dt><dd>{{money .Paid}}</dd>
+    <dt>{{if .Credit}}Credit{{else}}Outstanding{{end}}</dt><dd>{{if .Credit}}{{money .Credit}}{{else}}{{money .Outstanding}}{{end}}</dd>
+  </dl>
+</div>
+{{end}}
+
+<form method="post" action="/students/{{$s.ID}}/fees/assessment" class="inline card">
+  {{template "csrf" .CSRF}}
+  <input type="hidden" name="term_id" value="{{.Data.TermID}}">
+  <div class="field"><label for="req_amount">Required fees for this term</label>
+    <input type="text" inputmode="decimal" id="req_amount" name="amount" required
+      value="{{with .Data.Selected}}{{if .Assessed}}{{money .Required}}{{end}}{{end}}"></div>
+  <button>Save required fees</button>
+</form>
+
+<form method="post" action="/students/{{$s.ID}}/fees/payments" class="inline card">
+  {{template "csrf" .CSRF}}
+  <input type="hidden" name="term_id" value="{{.Data.TermID}}">
+  <div class="field"><label for="amount">Payment amount</label>
+    <input type="text" inputmode="decimal" id="amount" name="amount" required></div>
+  <div class="field"><label for="paid_on">Payment date</label>
+    <input type="date" id="paid_on" name="paid_on" value="{{.Data.Today}}" max="{{.Data.Today}}" required></div>
+  <div class="field"><label for="reference">Reference (optional)</label>
+    <input type="text" id="reference" name="reference" maxlength="100" placeholder="e.g. M-Pesa code"></div>
+  <button>Record payment</button>
+</form>
+
+<h2>Payment history</h2>
+{{template "paymentsTable" .Data.Payments}}
+{{end}}
+{{end}}

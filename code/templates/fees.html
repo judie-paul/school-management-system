@@ -1,0 +1,33 @@
+{{define "content"}}
+<h1>Fees</h1>
+<p class="muted">To record a payment, open a student's fee page from the list below or from <a href="/students">Students</a>.</p>
+<form method="get" action="/fees" class="inline card">
+  <div class="field"><label for="term_id">Year / term</label>
+    <select id="term_id" name="term_id">{{range .Data.Terms}}<option value="{{.ID}}" {{if eq .ID $.Data.TermID}}selected{{end}}>{{.Label}}</option>{{end}}</select></div>
+  <div class="field"><label for="class_id">Class</label>
+    <select id="class_id" name="class_id">{{range .Data.Classes}}<option value="{{.ID}}" {{if eq .ID $.Data.ClassID}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+  <button>Show balances</button>
+</form>
+
+{{if and .Data.TermID .Data.ClassID}}
+<form method="post" action="/fees/class-assessment" class="inline card">
+  {{template "csrf" .CSRF}}
+  <input type="hidden" name="term_id" value="{{.Data.TermID}}">
+  <input type="hidden" name="class_id" value="{{.Data.ClassID}}">
+  <div class="field"><label for="amount">Set required fees for every active student in this class</label>
+    <input type="text" inputmode="decimal" id="amount" name="amount" required placeholder="e.g. 15000"></div>
+  <button>Apply to class</button>
+</form>
+
+{{if .Data.Rows}}
+<div class="table-wrap"><table>
+  <thead><tr><th>Admission no.</th><th>Name</th><th class="num">Required</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>
+  <tbody>{{range .Data.Rows}}
+    <tr><td>{{.Student.AdmissionNo}}</td><td><a href="/students/{{.Student.ID}}/fees?term_id={{$.Data.TermID}}">{{.Student.FullName}}</a></td>
+      <td class="num">{{if .Assessed}}{{money .Required}}{{else}}-{{end}}</td><td class="num">{{money .Paid}}</td>
+      <td class="num">{{template "balance" .}}</td><td>{{template "feeStatus" .Status}}</td></tr>
+  {{end}}</tbody>
+</table></div>
+{{else}}<p>No active students in this class.</p>{{end}}
+{{end}}
+{{end}}

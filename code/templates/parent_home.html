@@ -1,0 +1,13 @@
+{{define "content"}}
+<h1>{{.Student.FullName}}</h1>
+<div class="card">
+  <dl class="details">
+    <dt>Admission no.</dt><dd>{{.Student.AdmissionNo}}</dd>
+    <dt>Current class</dt><dd>{{.Student.ClassName}}</dd>
+  </dl>
+</div>
+<ul class="links">
+  <li><a href="/parent/results">Examination results</a></li>
+  <li><a href="/parent/fees">School fee records</a></li>
+</ul>
+{{end}}

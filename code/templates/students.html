@@ -1,0 +1,26 @@
+{{define "content"}}
+<h1>Students</h1>
+{{if isRole .Staff "admin"}}<p><a class="button" href="/students/new">Register student</a></p>{{end}}
+<form method="get" action="/students" class="inline card">
+  <div class="field grow"><label for="q">Name or admission number</label>
+    <input type="search" id="q" name="q" value="{{.Data.Q}}"></div>
+  <div class="field"><label for="class_id">Class</label>
+    <select id="class_id" name="class_id"><option value="0">All classes</option>
+      {{range .Data.Classes}}<option value="{{.ID}}" {{if eq .ID $.Data.ClassID}}selected{{end}}>{{.Name}}</option>{{end}}
+    </select></div>
+  <div class="field checkbox"><input type="checkbox" id="inactive" name="inactive" value="1" {{if .Data.Inactive}}checked{{end}}>
+    <label for="inactive">Include inactive</label></div>
+  <button>Search</button>
+</form>
+{{if .Data.Students}}
+<div class="table-wrap"><table>
+  <thead><tr><th>Admission no.</th><th>Name</th><th>Class</th><th>Status</th></tr></thead>
+  <tbody>
+  {{range .Data.Students}}
+    <tr><td>{{.AdmissionNo}}</td><td><a href="/students/{{.ID}}">{{.FullName}}</a></td><td>{{.ClassName}}</td>
+      <td>{{if .Active}}<span class="badge ok">Active</span>{{else}}<span class="badge muted">Inactive</span>{{end}}</td></tr>
+  {{end}}
+  </tbody>
+</table></div>
+{{else}}<p>No students found.</p>{{end}}
+{{end}}

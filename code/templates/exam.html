@@ -1,0 +1,45 @@
+{{define "content"}}
+{{$e := .Data.Exam}}
+<h1>{{$e.Name}}</h1>
+<div class="card">
+  <dl class="details">
+    <dt>Year / term</dt><dd>{{$e.TermLabel}}</dd>
+    <dt>Class</dt><dd>{{$e.ClassName}}</dd>
+    <dt>Max marks</dt><dd>{{marks $e.MaxMarks}} per subject</dd>
+    <dt>Status</dt><dd>{{if $e.Published}}<span class="badge ok">Published</span> visible to parents{{else}}<span class="badge muted">Draft</span> hidden from parents{{end}}</dd>
+  </dl>
+  {{if isRole .Staff "admin"}}
+  <form method="post" action="/exams/{{$e.ID}}/publish" class="actions">
+    {{template "csrf" .CSRF}}
+    {{if $e.Published}}<input type="hidden" name="published" value="0"><button class="secondary">Unpublish (back to draft)</button>
+    {{else}}<input type="hidden" name="published" value="1"><button>Publish results to parents</button>{{end}}
+  </form>
+  {{end}}
+</div>
+
+<h2>Enter marks</h2>
+{{if not .Data.Subjects}}
+<p class="msg err">No subjects exist yet. An administrator must add subjects on the setup page.</p>
+{{else}}
+<form method="get" action="/exams/{{$e.ID}}" class="inline card">
+  <div class="field"><label for="subject_id">Subject</label>
+    <select id="subject_id" name="subject_id">{{range .Data.Subjects}}<option value="{{.ID}}" {{if eq .ID $.Data.SubjectID}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+  <button class="secondary">Show</button>
+</form>
+{{if .Data.Rows}}
+<form method="post" action="/exams/{{$e.ID}}/marks">
+  {{template "csrf" .CSRF}}
+  <input type="hidden" name="subject_id" value="{{.Data.SubjectID}}">
+  <div class="table-wrap"><table>
+    <thead><tr><th>Admission no.</th><th>Name</th><th>Marks (0-{{marks $e.MaxMarks}})</th></tr></thead>
+    <tbody>{{range .Data.Rows}}
+      <tr><td>{{.Student.AdmissionNo}}</td><td>{{.Student.FullName}}</td>
+        <td><input class="marks" type="text" inputmode="decimal" name="m_{{.Student.ID}}" value="{{.Value}}" aria-label="Marks for {{.Student.FullName}}"></td></tr>
+    {{end}}</tbody>
+  </table></div>
+  <p class="muted">Leave a box empty for no result. Clearing a saved mark removes it.</p>
+  <button>Save marks</button>
+</form>
+{{else}}<p>No active students in {{$e.ClassName}}.</p>{{end}}
+{{end}}
+{{end}}

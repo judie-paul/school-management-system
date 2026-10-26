@@ -1,0 +1,18 @@
+{{define "content"}}
+<h1>Examination results</h1>
+{{if .Data.Exams}}
+<form method="get" action="/parent/results" class="inline card">
+  <div class="field grow"><label for="exam_id">Examination</label>
+    <select id="exam_id" name="exam_id">
+      {{range .Data.Exams}}<option value="{{.ID}}" {{if eq .ID $.Data.ExamID}}selected{{end}}>{{.TermLabel}}: {{.Name}}</option>{{end}}
+    </select></div>
+  <button>View</button>
+</form>
+{{with .Data.Selected}}
+<div class="card">
+  <strong>{{.Exam.Name}}</strong> <span class="muted">{{.Exam.TermLabel}}, {{.Exam.ClassName}}</span>
+  {{template "resultsTable" .}}
+</div>
+{{else}}<p>Choose an examination above.</p>{{end}}
+{{else}}<p>No published results yet.</p>{{end}}
+{{end}}

@@ -1,0 +1,36 @@
+{{define "content"}}
+<h1>Staff accounts</h1>
+<details class="card">
+  <summary><strong>Create an account</strong></summary>
+  <form method="post" action="/staff" class="inline">
+    {{template "csrf" .CSRF}}
+    <div class="field"><label for="username">Username</label><input type="text" id="username" name="username" required maxlength="40" autocomplete="off"></div>
+    <div class="field"><label for="full_name">Full name</label><input type="text" id="full_name" name="full_name" required maxlength="100"></div>
+    <div class="field"><label for="role">Role</label>
+      <select id="role" name="role">{{range .Data.Roles}}<option value="{{.}}" {{if eq . "teacher"}}selected{{end}}>{{.}}</option>{{end}}</select></div>
+    <div class="field"><label for="password">Initial password (8+ characters)</label><input type="password" id="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password"></div>
+    <button>Create</button>
+  </form>
+  <p class="muted">Teachers enter exam results. Finance staff manage fees. Administrators can do everything.</p>
+</details>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>{{range .Data.StaffList}}
+    <tr><td>{{.Username}}</td><td>{{.FullName}}</td><td>{{.Role}}</td>
+      <td>{{if .Active}}<span class="badge ok">Active</span>{{else}}<span class="badge muted">Disabled</span>{{end}}</td>
+      <td>
+        {{if ne .ID $.Staff.ID}}
+        <form method="post" action="/staff/{{.ID}}/active" class="button-form">{{template "csrf" $.CSRF}}
+          {{if .Active}}<input type="hidden" name="active" value="0"><button class="secondary">Disable</button>
+          {{else}}<input type="hidden" name="active" value="1"><button class="secondary">Enable</button>{{end}}
+        </form>
+        {{end}}
+        <form method="post" action="/staff/{{.ID}}/password" class="inline mt">{{template "csrf" $.CSRF}}
+          <div class="field"><input type="password" name="password" required minlength="8" maxlength="72" placeholder="New password" aria-label="New password for {{.Username}}" autocomplete="new-password"></div>
+          <button class="secondary">Set password</button>
+        </form>
+      </td></tr>
+  {{end}}</tbody>
+</table></div>
+{{end}}

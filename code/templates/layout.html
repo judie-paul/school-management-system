@@ -1,0 +1,76 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} - School Manager</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">School Manager</a>
+  {{if .Staff}}
+  <nav>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/students">Students</a>
+    {{if isRole .Staff "admin" "teacher"}}<a href="/exams">Exams</a>{{end}}
+    {{if isRole .Staff "admin" "finance"}}<a href="/fees">Fees</a>{{end}}
+    {{if isRole .Staff "admin"}}<a href="/staff">Staff</a> <a href="/setup">Setup</a>{{end}}
+  </nav>
+  <form method="post" action="/logout" class="logout">{{template "csrf" .CSRF}}
+    <span>{{.Staff.FullName}} ({{.Staff.Role}})</span> <button>Log out</button>
+  </form>
+  {{else if .Student}}
+  <nav>
+    <a href="/parent">Home</a>
+    <a href="/parent/results">Results</a>
+    <a href="/parent/fees">Fees</a>
+  </nav>
+  <form method="post" action="/logout" class="logout">{{template "csrf" .CSRF}}<button>Log out</button></form>
+  {{end}}
+</header>
+<main>
+{{with .Flash}}<p class="msg ok">{{.}}</p>{{end}}
+{{with .Error}}<p class="msg err" role="alert">{{.}}</p>{{end}}
+{{template "content" .}}
+</main>
+</body>
+</html>{{end}}
+
+{{define "csrf"}}<input type="hidden" name="csrf_token" value="{{.}}">{{end}}
+
+{{/* Expects a web.examResults. */}}
+{{define "resultsTable"}}
+<div class="table-wrap"><table>
+  <thead><tr><th>Subject</th><th class="num">Marks</th><th class="num">%</th></tr></thead>
+  <tbody>{{range .Results}}<tr><td>{{.SubjectName}}</td><td class="num">{{marks .Marks}} / {{marks .MaxMarks}}</td><td class="num">{{pct .Percent}}</td></tr>{{end}}</tbody>
+  <tfoot><tr><td>Total</td><td class="num">{{marks .Total}} / {{marks .Max}}</td><td class="num">{{pct .Percent}}</td></tr></tfoot>
+</table></div>
+{{end}}
+
+{{/* Expects a []store.FeeSummary. */}}
+{{define "feeSummaryTable"}}
+{{if .}}
+<div class="table-wrap"><table>
+  <thead><tr><th>Term</th><th class="num">Required</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>
+  <tbody>{{range .}}
+    <tr><td>{{.Term.Label}}</td><td class="num">{{if .Assessed}}{{money .Required}}{{else}}-{{end}}</td><td class="num">{{money .Paid}}</td>
+      <td class="num">{{template "balance" .}}</td><td>{{template "feeStatus" .Status}}</td></tr>
+  {{end}}</tbody>
+</table></div>
+{{else}}<p>No fees recorded.</p>{{end}}
+{{end}}
+
+{{/* Expects a []store.Payment. */}}
+{{define "paymentsTable"}}
+{{if .}}
+<div class="table-wrap"><table>
+  <thead><tr><th>Date</th><th class="num">Amount</th><th>Reference</th></tr></thead>
+  <tbody>{{range .}}<tr><td>{{.PaidOn}}</td><td class="num">{{money .Amount}}</td><td>{{.Reference}}</td></tr>{{end}}</tbody>
+</table></div>
+{{else}}<p>No payments recorded for this term.</p>{{end}}
+{{end}}
+
+{{define "balance"}}{{if .Credit}}Credit {{money .Credit}}{{else}}{{money .Outstanding}}{{end}}{{end}}
+
+{{define "feeStatus"}}{{if eq . "Fully paid"}}<span class="badge ok">{{.}}</span>{{else if eq . "Partially paid"}}<span class="badge warn">{{.}}</span>{{else if eq . "Unpaid"}}<span class="badge err">{{.}}</span>{{else}}<span class="badge muted">{{.}}</span>{{end}}{{end}}

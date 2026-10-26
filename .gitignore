@@ -1,0 +1,8 @@
+# Build output (rebuild with build.ps1)
+build/*
+!build/.gitkeep
+
+# SQLite database files: real school data must never be committed
+*.db
+*.db-shm
+*.db-wal

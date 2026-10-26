@@ -1,0 +1,30 @@
+{{define "content"}}
+<h1>Examinations</h1>
+{{if isRole .Staff "admin"}}
+<details class="card" {{if not .Data.Exams}}open{{end}}>
+  <summary><strong>Create an examination</strong></summary>
+  {{if or (not .Data.Terms) (not .Data.Classes)}}
+  <p class="msg err">Add at least one class and one term on the <a href="/setup">setup page</a> first.</p>
+  {{end}}
+  <form method="post" action="/exams" class="inline">
+    {{template "csrf" .CSRF}}
+    <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" required maxlength="80" placeholder="e.g. Midterm"></div>
+    <div class="field"><label for="term_id">Year / term</label>
+      <select id="term_id" name="term_id" required>{{range .Data.Terms}}<option value="{{.ID}}">{{.Label}}</option>{{end}}</select></div>
+    <div class="field"><label for="class_id">Class</label>
+      <select id="class_id" name="class_id" required>{{range .Data.Classes}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label for="max_marks">Max marks per subject</label><input type="number" id="max_marks" name="max_marks" value="100" min="1" max="1000" step="any"></div>
+    <button>Create</button>
+  </form>
+</details>
+{{end}}
+{{if .Data.Exams}}
+<div class="table-wrap"><table>
+  <thead><tr><th>Exam</th><th>Year / term</th><th>Class</th><th class="num">Max marks</th><th>Status</th></tr></thead>
+  <tbody>{{range .Data.Exams}}
+    <tr><td><a href="/exams/{{.ID}}">{{.Name}}</a></td><td>{{.TermLabel}}</td><td>{{.ClassName}}</td><td class="num">{{marks .MaxMarks}}</td>
+      <td>{{if .Published}}<span class="badge ok">Published</span>{{else}}<span class="badge muted">Draft</span>{{end}}</td></tr>
+  {{end}}</tbody>
+</table></div>
+{{else}}<p>No examinations yet.</p>{{end}}
+{{end}}

@@ -1,0 +1,15 @@
+{{define "content"}}
+<div class="card narrow">
+  <h1>Parent portal</h1>
+  <p class="muted">Use your child's admission number and the access code given to you by the school.</p>
+  <form method="post" action="/parent/login" class="stack">
+    {{template "csrf" .CSRF}}
+    <div class="field"><label for="admission_no">Admission number</label>
+      <input type="text" id="admission_no" name="admission_no" value="{{.Data}}" required autofocus autocapitalize="characters"></div>
+    <div class="field"><label for="access_code">Access code</label>
+      <input type="password" id="access_code" name="access_code" required autocapitalize="characters" autocomplete="off"></div>
+    <button>Log in</button>
+  </form>
+  <p class="muted">School staff: <a href="/login">staff login</a>.</p>
+</div>
+{{end}}

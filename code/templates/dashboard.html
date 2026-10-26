@@ -1,0 +1,16 @@
+{{define "content"}}
+<h1>Welcome, {{.Staff.FullName}}</h1>
+<ul class="links">
+  <li><a href="/students">Students</a></li>
+  {{if isRole .Staff "admin"}}<li><a href="/students/new">Register a student</a></li>{{end}}
+  {{if isRole .Staff "admin" "teacher"}}<li><a href="/exams">Examinations &amp; results</a></li>{{end}}
+  {{if isRole .Staff "admin" "finance"}}<li><a href="/fees">Fee payments</a></li>{{end}}
+  {{if isRole .Staff "admin"}}<li><a href="/staff">Staff accounts</a></li>
+  <li><a href="/setup">Classes, subjects &amp; terms</a></li>{{end}}
+</ul>
+<form method="get" action="/students" class="inline card">
+  <div class="field grow"><label for="q">Find a student</label>
+    <input type="search" id="q" name="q" placeholder="Name or admission number"></div>
+  <button>Search</button>
+</form>
+{{end}}

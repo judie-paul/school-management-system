@@ -1,0 +1,35 @@
+{{define "content"}}
+{{$s := .Data.Student}}
+<h1>{{$s.FullName}}</h1>
+<div class="card">
+  <dl class="details">
+    <dt>Admission no.</dt><dd>{{$s.AdmissionNo}}</dd>
+    <dt>Class</dt><dd>{{$s.ClassName}}</dd>
+    <dt>Status</dt><dd>{{if $s.Active}}Active{{else}}Inactive{{end}}</dd>
+  </dl>
+  <div class="actions">
+    {{if isRole .Staff "admin"}}
+    <a class="button secondary" href="/students/{{$s.ID}}/edit">Edit</a>
+    <form method="post" action="/students/{{$s.ID}}/reset-code" class="button-form">{{template "csrf" .CSRF}}
+      <button class="secondary">Reset parent access code</button></form>
+    {{end}}
+    {{if isRole .Staff "admin" "finance"}}<a class="button secondary" href="/students/{{$s.ID}}/fees">Fees &amp; payments</a>{{end}}
+  </div>
+</div>
+
+{{if isRole .Staff "admin" "teacher"}}
+<h2>Examination results</h2>
+{{range .Data.Exams}}
+<div class="card">
+  <strong>{{.Exam.Name}}</strong> <span class="muted">{{.Exam.TermLabel}}, {{.Exam.ClassName}}</span>
+  {{if .Exam.Published}}<span class="badge ok">Published</span>{{else}}<span class="badge muted">Draft</span>{{end}}
+  {{template "resultsTable" .}}
+</div>
+{{else}}<p>No results recorded.</p>{{end}}
+{{end}}
+
+{{if isRole .Staff "admin" "finance"}}
+<h2>Fees by term</h2>
+{{template "feeSummaryTable" .Data.Fees}}
+{{end}}
+{{end}}

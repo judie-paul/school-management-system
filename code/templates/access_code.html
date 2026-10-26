@@ -1,0 +1,12 @@
+{{define "content"}}
+<div class="card narrow">
+  <h1>Parent access code</h1>
+  <dl class="details">
+    <dt>Student</dt><dd>{{.Data.Student.FullName}}</dd>
+    <dt>Admission no.</dt><dd>{{.Data.Student.AdmissionNo}}</dd>
+  </dl>
+  <p class="code">{{.Data.Code}}</p>
+  <p><strong>Write this code down and give it to the parent now.</strong> It is stored securely and cannot be shown again. If it is lost, an administrator can generate a new one.</p>
+  <p><a class="button" href="/students/{{.Data.Student.ID}}">Go to student profile</a></p>
+</div>
+{{end}}
